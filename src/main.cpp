@@ -74,7 +74,6 @@ void callback(char* topic, byte* message, unsigned int length) {
     messageTemp += (char)message[i];
   }
   Serial.println();
-
 }
 
 void reconnect() {
@@ -90,10 +89,9 @@ void reconnect() {
         Serial.print(client.state());
         delay(2000);
     } 
-  }
+}
 
-void setup()
-{
+void setup() {
   // Initialize sensor and communication
   pinMode(lightningInt, INPUT); 
 
@@ -127,33 +125,17 @@ void setup()
   Serial.print("Noise Level is set at: ");
   Serial.println(noiseVal);
 
-  // Watchdog threshold setting can be from 1-10, one being the lowest. Default setting is
-  // two. If you need to check the setting, the corresponding function for
-  // reading the function follows.    
-
   lightning.watchdogThreshold(watchDogVal); // Set watchdog
 
   int watchVal = lightning.readWatchdogThreshold();
   Serial.print("Watchdog Threshold is set to: ");
   Serial.println(watchVal);
 
-  // Spike Rejection setting from 1-11, one being the lowest. Default setting is
-  // two. If you need to check the setting, the corresponding function for
-  // reading the function follows.    
-  // The shape of the spike is analyzed during the chip's
-  // validation routine. You can round this spike at the cost of sensitivity to
-  // distant events. 
-
   lightning.spikeRejection(spike);         // Set spike rejection
 
   int spikeVal = lightning.readSpikeRejection();
   Serial.print("Spike Rejection is set to: ");
   Serial.println(spikeVal);
-
-  // This setting will change when the lightning detector issues an interrupt.
-  // For example you will only get an interrupt after five lightning strikes
-  // instead of one. Default is one, and it takes settings of 1, 5, 9 and 16.   
-  // Followed by its corresponding read function. Default is zero. 
 
   lightning.lightningThreshold(lightningThresh); // Set strike threshold
 
@@ -165,19 +147,15 @@ void setup()
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-
-  //lightning.resetSettings();
 }
 
-void loop()
-{
+void loop() {
   // Maintain MQTT connection
   if (!client.connected()) {
       reconnect();
   }
-  //client.loop();
 
-   // Check for lightning events
+  // Check for lightning events
   if(digitalRead(lightningInt) == HIGH){
     intVal = lightning.readInterruptReg();
     
@@ -185,22 +163,14 @@ void loop()
     if(intVal == NOISE_INT){
       // Handle noise detection
       Serial.println("Noise."); 
-      // Too much noise? Uncomment the code below, a higher number means better
-      // noise rejection.
-      //lightning.setNoiseLevel(noise); 
     }
     else if(intVal == DISTURBER_INT){
       // Handle disturber detection
       Serial.println("Disturber."); 
-      // Too many disturbers? Uncomment the code below, a higher number means better
-      // disturber rejection.
-      //lightning.watchdogThreshold(disturber);  
     }
     else if(intVal == LIGHTNING_INT){
       // Handle lightning strike
       Serial.println("Lightning Strike Detected!"); 
-      // Lightning! Now how far away is it? Distance estimation takes into
-      // account any previously seen events in the last 15 seconds. 
       byte distance = lightning.distanceToStorm(); 
       Serial.print("Approximately: "); 
       Serial.print(distance); 
@@ -212,7 +182,6 @@ void loop()
       // Publish lightning data to MQTT
       client.publish("esp32/as3935/lightningdistance", String(distance).c_str(), true);
       client.publish("esp32/as3935/lightningenergy", String(energy).c_str(), true);
-      
     }
   }
   delay(100); // Prevent busy waiting

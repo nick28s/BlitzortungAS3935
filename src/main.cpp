@@ -26,25 +26,23 @@ SparkFun_AS3935 lightning;
 
 // Interrupt pin for lightning detection 
 const int lightningInt = 32; 
-int spiCS = 25; //SPI chip select pin
+int spiCS = 25; // SPI chip select pin
 
-// This variable holds the number representing the lightning or non-lightning
+// This variable holds the number representing the lightniang or non-lightning
 // event issued by the lightning detector. 
-int intVal = 0; //Interrupt
-//int noise = 2; // Value between 1-7 
-//int disturber = 2; // Value between 1-10
+int intVal = 0; // Interrupt value
 
 // Values for modifying the IC's settings. All of these values are set to their
 // default values. 
-byte noiseFloor = 2; // Value between 1-7 reduce noise default:2
-byte watchDogVal = 7; // Value between 1-10 reeuce disturber default:2
-byte spike = 2;   // 1-11 reject false positives by reducing the spike default:2
-byte lightningThresh = 1;
+byte noiseFloor = 2; // Value between 1-7 to reduce noise, default: 2
+byte watchDogVal = 7; // Value between 1-10 to reduce disturber, default: 2
+byte spike = 2;   // Value between 1-11 to reject false positives by reducing the spike, default: 2
+byte lightningThresh = 1; // Lightning threshold
 
 void setup_wifi() {
   // WiFi connection setup
   delay(10);
-  //connecting to a WiFi network
+  // Connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);  // Using ssid from credentials.h
@@ -77,18 +75,18 @@ void callback(char* topic, byte* message, unsigned int length) {
 }
 
 void reconnect() {
-    // MQTT reconnection logic
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
-    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {  // Using MQTT credentials from credentials.h
-        client.publish("esp32/as3935/status", String(con).c_str(), true);
-        con++;
-        if(con==10) con = 1; 
-    } else {
-        Serial.print("failed with state ");
-        Serial.print(client.state());
-        delay(2000);
-    } 
+  // MQTT reconnection logic
+  String client_id = "esp32-client-";
+  client_id += String(WiFi.macAddress());
+  if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {  // Using MQTT credentials from credentials.h
+    client.publish("esp32/as3935/status", String(con).c_str(), true);
+    con++;
+    if(con == 10) con = 1; 
+  } else {
+    Serial.print("failed with state ");
+    Serial.print(client.state());
+    delay(2000);
+  } 
 }
 
 void setup() {
@@ -101,12 +99,12 @@ void setup() {
 
   SPI.begin(); 
 
-  if( !lightning.beginSPI(spiCS, 2000000) ){ 
-    Serial.println ("Lightning Detector did not start up, freezing!"); 
-    while(1); 
-  }
-  else
+  if (!lightning.beginSPI(spiCS, 2000000)) { 
+    Serial.println("Lightning Detector did not start up, freezing!"); 
+    while (1); 
+  } else {
     Serial.println("Schmow-ZoW, Lightning Detector Ready!");
+  }
 
   // Configure lightning sensor settings
   lightning.setIndoorOutdoor(OUTDOOR);     // Set to outdoor mode
@@ -140,7 +138,7 @@ void setup() {
   lightning.lightningThreshold(lightningThresh); // Set strike threshold
 
   uint8_t lightVal = lightning.readLightningThreshold();
-  Serial.print("The number of strikes before interrupt is triggerd: "); 
+  Serial.print("The number of strikes before interrupt is triggered: "); 
   Serial.println(lightVal); 
 
   // Initialize WiFi and MQTT
@@ -152,23 +150,21 @@ void setup() {
 void loop() {
   // Maintain MQTT connection
   if (!client.connected()) {
-      reconnect();
+    reconnect();
   }
 
   // Check for lightning events
-  if(digitalRead(lightningInt) == HIGH){
+  if (digitalRead(lightningInt) == HIGH) {
     intVal = lightning.readInterruptReg();
     
     // Handle different interrupt types
-    if(intVal == NOISE_INT){
+    if (intVal == NOISE_INT) {
       // Handle noise detection
       Serial.println("Noise."); 
-    }
-    else if(intVal == DISTURBER_INT){
+    } else if (intVal == DISTURBER_INT) {
       // Handle disturber detection
       Serial.println("Disturber."); 
-    }
-    else if(intVal == LIGHTNING_INT){
+    } else if (intVal == LIGHTNING_INT) {
       // Handle lightning strike
       Serial.println("Lightning Strike Detected!"); 
       byte distance = lightning.distanceToStorm(); 
